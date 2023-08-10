@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
@@ -85,7 +85,7 @@ fn as_string(interpreter: &mut Interpreter, _: &mut Universe) {
     };
 
     {
-        interpreter.stack.push(Value::String(Rc::new(value)));
+        interpreter.stack.push(Value::String(Gc::new(value)));
         return;
     }
 }

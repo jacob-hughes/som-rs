@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::convert::TryFrom;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use crate::interpreter::Interpreter;
 use crate::primitives::PrimitiveFn;
@@ -76,7 +76,7 @@ fn new(interpreter: &mut Interpreter, _: &mut Universe) {
     match usize::try_from(count) {
         Ok(length) => interpreter
             .stack
-            .push(Value::Array(Rc::new(RefCell::new(vec![
+            .push(Value::Array(Gc::new(RefCell::new(vec![
                 Value::Nil;
                 length
             ])))),

@@ -2,8 +2,14 @@
 //! This is the interpreter for the Simple Object Machine.
 //!
 
+#![feature(gc)]
+use std::gc::GcAllocator;
+
+#[global_allocator]
+static A: GcAllocator = GcAllocator;
+
 use std::cell::RefCell;
-use std::rc::{Rc, Weak};
+use std::gc::Gc;
 
 /// Facilities for manipulating blocks.
 pub mod block;
@@ -31,6 +37,4 @@ pub mod universe;
 pub mod value;
 
 /// A strong and owning reference to an object.
-pub type SOMRef<T> = Rc<RefCell<T>>;
-/// A weak reference to an object.
-pub type SOMWeakRef<T> = Weak<RefCell<T>>;
+pub type SOMRef<T> = Gc<RefCell<T>>;

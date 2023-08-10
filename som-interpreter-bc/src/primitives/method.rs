@@ -18,7 +18,7 @@ fn holder(interpreter: &mut Interpreter, _: &mut Universe) {
         Value::Invokable(invokable) => invokable,
     ]);
 
-    match invokable.holder().upgrade() {
+    match invokable.holder() {
         Some(holder) => interpreter.stack.push(Value::Class(holder)),
         None => panic!("'{}': method sholder has been collected", SIGNATURE),
     }

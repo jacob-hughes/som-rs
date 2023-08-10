@@ -1,10 +1,11 @@
 //!
 //! This is the interpreter for the Simple Object Machine.
 //!
+#![feature(gc)]
 #![warn(missing_docs)]
 
+use std::gc::Gc;
 use std::path::PathBuf;
-use std::rc::Rc;
 
 use anyhow::anyhow;
 #[cfg(feature = "jemalloc")]
@@ -16,10 +17,6 @@ mod shell;
 use som_interpreter_ast::invokable::Return;
 use som_interpreter_ast::universe::Universe;
 use som_interpreter_ast::value::Value;
-
-#[cfg(feature = "jemalloc")]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
 
 #[derive(Debug, Clone, PartialEq, StructOpt)]
 #[structopt(about, author)]
@@ -65,7 +62,7 @@ fn main() -> anyhow::Result<()> {
 
             let args = std::iter::once(String::from(file_stem))
                 .chain(opts.args.iter().cloned())
-                .map(Rc::new)
+                .map(Gc::new)
                 .map(Value::String)
                 .collect();
 
@@ -75,7 +72,7 @@ fn main() -> anyhow::Result<()> {
 
             // let class = universe.load_class_from_path(file)?;
             // let instance = Instance::from_class(class);
-            // let instance = Value::Instance(Rc::new(RefCell::new(instance)));
+            // let instance = Value::Instance(Gc::new(RefCell::new(instance)));
 
             // let invokable = instance.lookup_method(&universe, "run").unwrap();
             // let output = invokable.invoke(&mut universe, vec![instance]);

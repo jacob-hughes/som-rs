@@ -3,7 +3,7 @@ use som_core::ast;
 use crate::class::Class;
 use crate::primitives::PrimitiveFn;
 use crate::universe::Universe;
-use crate::{SOMRef, SOMWeakRef};
+use crate::SOMRef;
 
 /// The kind of a class method.
 #[derive(Clone)]
@@ -27,7 +27,7 @@ impl MethodKind {
 #[derive(Clone)]
 pub struct Method {
     pub kind: MethodKind,
-    pub holder: SOMWeakRef<Class>,
+    pub holder: Option<SOMRef<Class>>,
     pub signature: String,
 }
 
@@ -44,8 +44,8 @@ impl Method {
         &self.kind
     }
 
-    pub fn holder(&self) -> &SOMWeakRef<Class> {
-        &self.holder
+    pub fn holder(&self) -> Option<SOMRef<Class>> {
+        self.holder
     }
 
     pub fn signature(&self) -> &str {

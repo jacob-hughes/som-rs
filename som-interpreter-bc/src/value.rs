@@ -1,5 +1,5 @@
 use std::fmt;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use num_bigint::BigInt;
 
@@ -29,17 +29,17 @@ pub enum Value {
     /// An interned symbol value.
     Symbol(Interned),
     /// A string value.
-    String(Rc<String>),
+    String(Gc<String>),
     /// An array of values.
     Array(SOMRef<Vec<Self>>),
     /// A block value, ready to be evaluated.
-    Block(Rc<Block>),
+    Block(Gc<Block>),
     /// A generic (non-primitive) class instance.
     Instance(SOMRef<Instance>),
     /// A bare class object.
     Class(SOMRef<Class>),
     /// A bare invokable.
-    Invokable(Rc<Method>),
+    Invokable(Gc<Method>),
 }
 
 impl Value {
@@ -64,7 +64,7 @@ impl Value {
     }
 
     /// Search for a given method for this value.
-    pub fn lookup_method(&self, universe: &Universe, signature: Interned) -> Option<Rc<Method>> {
+    pub fn lookup_method(&self, universe: &Universe, signature: Interned) -> Option<Gc<Method>> {
         self.class(universe).borrow().lookup_method(signature)
     }
 
@@ -121,7 +121,6 @@ impl Value {
             Self::Class(class) => class.borrow().name().to_string(),
             Self::Invokable(invokable) => invokable
                 .holder()
-                .upgrade()
                 .map(|holder| format!("{}>>#{}", holder.borrow().name(), invokable.signature()))
                 .unwrap_or_else(|| format!("??>>#{}", invokable.signature())),
         }
@@ -143,12 +142,12 @@ impl PartialEq for Value {
                 a.eq(&BigInt::from(*b))
             }
             (Self::Symbol(a), Self::Symbol(b)) => a.eq(b),
-            (Self::String(a), Self::String(b)) => Rc::ptr_eq(a, b),
-            (Self::Array(a), Self::Array(b)) => Rc::ptr_eq(a, b),
-            (Self::Instance(a), Self::Instance(b)) => Rc::ptr_eq(a, b),
-            (Self::Class(a), Self::Class(b)) => Rc::ptr_eq(a, b),
-            (Self::Block(a), Self::Block(b)) => Rc::ptr_eq(a, b),
-            (Self::Invokable(a), Self::Invokable(b)) => Rc::ptr_eq(a, b),
+            (Self::String(a), Self::String(b)) => Gc::ptr_eq(a, b),
+            (Self::Array(a), Self::Array(b)) => Gc::ptr_eq(a, b),
+            (Self::Instance(a), Self::Instance(b)) => Gc::ptr_eq(a, b),
+            (Self::Class(a), Self::Class(b)) => Gc::ptr_eq(a, b),
+            (Self::Block(a), Self::Block(b)) => Gc::ptr_eq(a, b),
+            (Self::Invokable(a), Self::Invokable(b)) => Gc::ptr_eq(a, b),
             _ => false,
         }
     }
@@ -172,7 +171,6 @@ impl fmt::Debug for Value {
             Self::Invokable(val) => {
                 let signature = val
                     .holder()
-                    .upgrade()
                     .map(|holder| format!("{}>>#{}", holder.borrow().name(), val.signature()))
                     .unwrap_or_else(|| format!("??>>#{}", val.signature()));
                 f.debug_tuple("Invokable").field(&signature).finish()

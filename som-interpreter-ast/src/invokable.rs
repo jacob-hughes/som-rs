@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use som_core::ast;
 
@@ -44,7 +44,7 @@ impl Invoke for Method {
                     };
                     (receiver, iter.collect::<Vec<_>>())
                 };
-                let holder = match self.holder().upgrade() {
+                let holder = match self.holder() {
                     Some(holder) => holder,
                     None => {
                         return Return::Exception(
@@ -114,7 +114,7 @@ impl Invoke for ast::MethodDef {
                 loop {
                     match body.evaluate(universe) {
                         Return::NonLocal(value, frame) => {
-                            if Rc::ptr_eq(&current_frame, &frame) {
+                            if Gc::ptr_eq(&current_frame, &frame) {
                                 break Return::Local(value);
                             } else {
                                 break Return::NonLocal(value, frame);

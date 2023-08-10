@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use som_core::ast;
 
@@ -45,7 +45,7 @@ impl Evaluate for ast::Expression {
                     .frames
                     .iter()
                     .rev()
-                    .any(|live_frame| Rc::ptr_eq(&live_frame, &frame));
+                    .any(|live_frame| Gc::ptr_eq(&live_frame, &frame));
                 if has_not_escaped {
                     Return::NonLocal(value, frame)
                 } else {
@@ -145,7 +145,7 @@ impl Evaluate for ast::Literal {
                     let value = propagate!(literal.evaluate(universe));
                     output.push(value);
                 }
-                Return::Local(Value::Array(Rc::new(RefCell::new(output))))
+                Return::Local(Value::Array(Gc::new(RefCell::new(output))))
             }
             Self::Integer(int) => Return::Local(Value::Integer(*int)),
             Self::BigInteger(int) => match int.parse() {
@@ -154,7 +154,7 @@ impl Evaluate for ast::Literal {
             },
             Self::Double(double) => Return::Local(Value::Double(*double)),
             Self::Symbol(sym) => Return::Local(Value::Symbol(universe.intern_symbol(sym))),
-            Self::String(string) => Return::Local(Value::String(Rc::new(string.clone()))),
+            Self::String(string) => Return::Local(Value::String(Gc::new(string.clone()))),
         }
     }
 }
@@ -169,7 +169,7 @@ impl Evaluate for ast::Block {
     fn evaluate(&self, universe: &mut Universe) -> Return {
         let frame = universe.current_frame();
         // TODO: avoid cloning the whole block's AST.
-        Return::Local(Value::Block(Rc::new(Block {
+        Return::Local(Value::Block(Gc::new(Block {
             block: self.clone(),
             frame: frame.clone(),
         })))

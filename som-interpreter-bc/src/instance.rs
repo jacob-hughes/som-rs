@@ -13,6 +13,9 @@ pub struct Instance {
     pub locals: Vec<Value>,
 }
 
+unsafe impl std::gc::FinalizerOptional for Instance {}
+unsafe impl core::marker::FinalizerSafe for Instance {}
+
 impl Instance {
     /// Construct an instance for a given class.
     pub fn from_class(class: SOMRef<Class>) -> Self {

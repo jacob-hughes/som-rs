@@ -18,7 +18,7 @@ fn holder(_: &mut Universe, args: Vec<Value>) -> Return {
         Value::Invokable(invokable) => invokable,
     ]);
 
-    match invokable.holder().upgrade() {
+    match invokable.holder() {
         Some(holder) => Return::Local(Value::Class(holder)),
         None => Return::Exception(format!(
             "'{}': method sholder has been collected",

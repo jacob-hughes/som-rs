@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::fmt;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use som_core::bytecode::Bytecode;
 
@@ -12,14 +12,14 @@ use crate::interpreter::Interpreter;
 use crate::primitives::PrimitiveFn;
 use crate::universe::Universe;
 use crate::value::Value;
-use crate::{SOMRef, SOMWeakRef};
+use crate::SOMRef;
 
 #[derive(Clone)]
 pub struct MethodEnv {
     pub locals: Vec<Interned>,
     pub literals: Vec<Literal>,
     pub body: Vec<Bytecode>,
-    pub inline_cache: RefCell<Vec<Option<(*const Class, Rc<Method>)>>>,
+    pub inline_cache: RefCell<Vec<Option<(*const Class, Gc<Method>)>>>,
 }
 
 /// The kind of a class method.
@@ -44,7 +44,7 @@ impl MethodKind {
 #[derive(Clone)]
 pub struct Method {
     pub kind: MethodKind,
-    pub holder: SOMWeakRef<Class>,
+    pub holder: Option<SOMRef<Class>>,
     pub signature: String,
 }
 
@@ -61,8 +61,8 @@ impl Method {
         &self.kind
     }
 
-    pub fn holder(&self) -> &SOMWeakRef<Class> {
-        &self.holder
+    pub fn holder(&self) -> Option<SOMRef<Class>> {
+        self.holder
     }
 
     pub fn signature(&self) -> &str {
@@ -75,7 +75,7 @@ impl Method {
     }
 
     pub fn invoke(
-        self: Rc<Self>,
+        self: Gc<Self>,
         interpreter: &mut Interpreter,
         universe: &mut Universe,
         receiver: Value,
@@ -83,7 +83,7 @@ impl Method {
     ) {
         match self.kind() {
             MethodKind::Defined(_) => {
-                let holder = self.holder().upgrade().unwrap();
+                let holder = self.holder().unwrap();
                 let kind = FrameKind::Method {
                     method: self,
                     holder,
@@ -109,7 +109,7 @@ impl fmt::Display for Method {
         write!(
             f,
             "#{}>>#{} = ",
-            self.holder.upgrade().unwrap().borrow().name(),
+            self.holder.unwrap().borrow().name(),
             self.signature
         )?;
         match &self.kind {

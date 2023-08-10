@@ -2,9 +2,9 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fs;
+use std::gc::Gc;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 use std::time::Instant;
 
 use anyhow::{anyhow, Error};
@@ -468,7 +468,7 @@ impl Universe {
 impl Universe {
     /// Execute a piece of code within a new stack frame.
     pub fn with_frame<T>(&mut self, kind: FrameKind, func: impl FnOnce(&mut Self) -> T) -> T {
-        let frame = Rc::new(RefCell::new(Frame::from_kind(kind)));
+        let frame = Gc::new(RefCell::new(Frame::from_kind(kind)));
         self.frames.push(frame);
         let ret = func(self);
         self.frames.pop();
@@ -535,7 +535,7 @@ impl Universe {
 
 impl Universe {
     /// Call `escapedBlock:` on the given value, if it is defined.
-    pub fn escaped_block(&mut self, value: Value, block: Rc<Block>) -> Option<Return> {
+    pub fn escaped_block(&mut self, value: Value, block: Gc<Block>) -> Option<Return> {
         let initialize = value.lookup_method(self, "escapedBlock:")?;
 
         Some(initialize.invoke(self, vec![value, Value::Block(block)]))
@@ -551,7 +551,7 @@ impl Universe {
         let initialize = value.lookup_method(self, "doesNotUnderstand:arguments:")?;
         let sym = self.intern_symbol(symbol.as_ref());
         let sym = Value::Symbol(sym);
-        let args = Value::Array(Rc::new(RefCell::new(args)));
+        let args = Value::Array(Gc::new(RefCell::new(args)));
 
         Some(initialize.invoke(self, vec![value, sym, args]))
     }
@@ -576,7 +576,7 @@ impl Universe {
     /// Call `System>>#initialize:` with the given name, if it is defined.
     pub fn initialize(&mut self, args: Vec<Value>) -> Option<Return> {
         let initialize = Value::System.lookup_method(self, "initialize:")?;
-        let args = Value::Array(Rc::new(RefCell::new(args)));
+        let args = Value::Array(Gc::new(RefCell::new(args)));
 
         Some(initialize.invoke(self, vec![Value::System, args]))
     }

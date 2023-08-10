@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use num_bigint::{BigInt, Sign};
 use num_traits::ToPrimitive;
@@ -81,7 +81,7 @@ fn as_string(_: &mut Universe, args: Vec<Value>) -> Return {
         _ => return Return::Exception(format!("'{}': wrong types", SIGNATURE)),
     };
 
-    Return::Local(Value::String(Rc::new(value)))
+    Return::Local(Value::String(Gc::new(value)))
 }
 
 fn as_double(_: &mut Universe, args: Vec<Value>) -> Return {

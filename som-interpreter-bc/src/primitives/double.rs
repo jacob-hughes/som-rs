@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use num_traits::ToPrimitive;
 
@@ -75,7 +75,7 @@ fn as_string(interpreter: &mut Interpreter, _: &mut Universe) {
 
     interpreter
         .stack
-        .push(Value::String(Rc::new(value.to_string())));
+        .push(Value::String(Gc::new(value.to_string())));
 }
 
 fn as_integer(interpreter: &mut Interpreter, _: &mut Universe) {

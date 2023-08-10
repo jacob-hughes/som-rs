@@ -1,10 +1,11 @@
 //!
 //! This is the interpreter for the Simple Object Machine.
 //!
+#![feature(gc)]
 #![warn(missing_docs)]
 
+use std::gc::Gc;
 use std::path::PathBuf;
-use std::rc::Rc;
 
 use anyhow::{bail, Context};
 #[cfg(feature = "jemalloc")]
@@ -18,10 +19,6 @@ use som_interpreter_bc::interpreter::Interpreter;
 use som_interpreter_bc::method::{Method, MethodKind};
 use som_interpreter_bc::universe::Universe;
 use som_interpreter_bc::value::Value;
-
-#[cfg(feature = "jemalloc")]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
 
 #[derive(Debug, Clone, PartialEq, StructOpt)]
 #[structopt(about, author)]

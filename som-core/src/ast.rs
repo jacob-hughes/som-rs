@@ -110,6 +110,9 @@ pub struct Body {
     pub full_stopped: bool,
 }
 
+unsafe impl std::gc::FinalizerOptional for Body {}
+unsafe impl std::gc::FinalizerOptional for Expression {}
+
 /// Represents an expression.
 ///
 /// Exemple:
@@ -162,6 +165,9 @@ pub struct Message {
     /// The list of dynamic values that are passed.
     pub values: Vec<Expression>,
 }
+
+// unsafe impl std::gc::FinalizerOptional for Message {}
+// unsafe impl core::marker::FinalizerSafe for Message {}
 
 /// Represents a binary operation.
 ///

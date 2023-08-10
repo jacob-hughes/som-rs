@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use crate::class::Class;
 use crate::expect_args;
@@ -38,7 +38,7 @@ fn new(_: &mut Universe, args: Vec<Value>) -> Return {
     ]);
 
     let instance = Instance::from_class(class);
-    let instance = Rc::new(RefCell::new(instance));
+    let instance = Gc::new(RefCell::new(instance));
     Return::Local(Value::Instance(instance))
 }
 
@@ -67,7 +67,7 @@ fn methods(_: &mut Universe, args: Vec<Value>) -> Return {
         .map(|invokable| Value::Invokable(invokable.clone()))
         .collect();
 
-    Return::Local(Value::Array(Rc::new(RefCell::new(methods))))
+    Return::Local(Value::Array(Gc::new(RefCell::new(methods))))
 }
 
 fn fields(universe: &mut Universe, args: Vec<Value>) -> Return {
@@ -94,7 +94,7 @@ fn fields(universe: &mut Universe, args: Vec<Value>) -> Return {
 
     let fields = gather_locals(universe, class);
 
-    Return::Local(Value::Array(Rc::new(RefCell::new(fields))))
+    Return::Local(Value::Array(Gc::new(RefCell::new(fields))))
 }
 
 /// Search for an instance primitive matching the given signature.

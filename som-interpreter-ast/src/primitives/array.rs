@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::convert::TryFrom;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use crate::expect_args;
 use crate::invokable::Return;
@@ -74,7 +74,7 @@ fn new(_: &mut Universe, args: Vec<Value>) -> Return {
     ]);
 
     match usize::try_from(count) {
-        Ok(length) => Return::Local(Value::Array(Rc::new(RefCell::new(vec![
+        Ok(length) => Return::Local(Value::Array(Gc::new(RefCell::new(vec![
             Value::Nil;
             length
         ])))),

@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 use std::fs;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use crate::frame::FrameKind;
 use crate::interpreter::Interpreter;
@@ -42,7 +42,7 @@ fn load_file(interpreter: &mut Interpreter, universe: &mut Universe) {
     };
 
     let value = match fs::read_to_string(path) {
-        Ok(value) => Value::String(Rc::new(value)),
+        Ok(value) => Value::String(Gc::new(value)),
         Err(_) => Value::Nil,
     };
 

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use crate::block::Block;
 use crate::class::Class;
@@ -13,7 +13,7 @@ pub enum FrameKind {
     /// A frame created from a block evaluation.
     Block {
         /// The block instance for the current frame.
-        block: Rc<Block>,
+        block: Gc<Block>,
     },
     /// A frame created from a method invocation.
     Method {
@@ -34,6 +34,9 @@ pub struct Frame {
     /// The bindings within this frame.
     pub bindings: HashMap<String, Value>,
 }
+
+unsafe impl std::gc::FinalizerOptional for Frame {}
+unsafe impl core::marker::FinalizerSafe for Frame {}
 
 impl Frame {
     /// Construct a new empty frame from its kind.

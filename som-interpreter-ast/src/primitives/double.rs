@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use num_traits::ToPrimitive;
 
@@ -75,7 +75,7 @@ fn as_string(_: &mut Universe, args: Vec<Value>) -> Return {
 
     let value = promote!(SIGNATURE, value);
 
-    Return::Local(Value::String(Rc::new(value.to_string())))
+    Return::Local(Value::String(Gc::new(value.to_string())))
 }
 
 fn as_integer(_: &mut Universe, args: Vec<Value>) -> Return {

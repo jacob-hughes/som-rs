@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use crate::expect_args;
 use crate::invokable::Return;
@@ -17,7 +17,7 @@ fn as_string(universe: &mut Universe, args: Vec<Value>) -> Return {
         Value::Symbol(sym) => sym,
     ]);
 
-    Return::Local(Value::String(Rc::new(
+    Return::Local(Value::String(Gc::new(
         universe.lookup_symbol(sym).to_string(),
     )))
 }

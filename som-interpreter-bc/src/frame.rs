@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::gc::Gc;
 
 use som_core::bytecode::Bytecode;
 
@@ -15,14 +15,14 @@ pub enum FrameKind {
     /// A frame created from a block evaluation.
     Block {
         /// The block instance for the current frame.
-        block: Rc<Block>,
+        block: Gc<Block>,
     },
     /// A frame created from a method invocation.
     Method {
         /// The holder of the current method (used for lexical self/super).
         holder: SOMRef<Class>,
         /// The current method.
-        method: Rc<Method>,
+        method: Gc<Method>,
         /// The self value.
         self_value: Value,
     },
@@ -98,7 +98,7 @@ impl Frame {
     }
 
     /// Get the current method itself.
-    pub fn get_method(&self) -> Rc<Method> {
+    pub fn get_method(&self) -> Gc<Method> {
         match &self.kind {
             FrameKind::Method { method, .. } => method.clone(),
             FrameKind::Block { block, .. } => block.frame.as_ref().unwrap().borrow().get_method(),

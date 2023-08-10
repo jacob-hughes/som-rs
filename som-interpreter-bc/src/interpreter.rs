@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::gc::Gc;
 use std::time::Instant;
 
 use som_core::bytecode::Bytecode;
@@ -33,7 +33,7 @@ impl Interpreter {
     }
 
     pub fn push_frame(&mut self, kind: FrameKind) -> SOMRef<Frame> {
-        let frame = Rc::new(RefCell::new(Frame::from_kind(kind)));
+        let frame = Gc::new(RefCell::new(Frame::from_kind(kind)));
         self.frames.push(frame.clone());
         frame
     }
@@ -118,8 +118,8 @@ impl Interpreter {
                         Literal::Block(blk) => Block::clone(&blk),
                         _ => return None,
                     };
-                    block.frame.replace(Rc::clone(&frame));
-                    self.stack.push(Value::Block(Rc::new(block)));
+                    block.frame.replace(Gc::clone(&frame));
+                    self.stack.push(Value::Block(Gc::new(block)));
                 }
                 Bytecode::PushConstant(idx) => {
                     let literal = frame.borrow().lookup_constant(idx as usize).unwrap();
@@ -231,7 +231,7 @@ impl Interpreter {
                         .frames
                         .iter()
                         .rev()
-                        .position(|live_frame| Rc::ptr_eq(&live_frame, &method_frame));
+                        .position(|live_frame| Gc::ptr_eq(&live_frame, &method_frame));
 
                     if let Some(count) = escaped_frames {
                         (0..count).for_each(|_| self.pop_frame());
@@ -260,7 +260,7 @@ impl Interpreter {
         fn do_send(
             interpreter: &mut Interpreter,
             universe: &mut Universe,
-            method: Option<Rc<Method>>,
+            method: Option<Gc<Method>>,
             symbol: Interned,
             nb_params: usize,
         ) {
@@ -296,7 +296,7 @@ impl Interpreter {
 
                     args.reverse();
 
-                    let holder = method.holder.upgrade().unwrap();
+                    let holder = method.holder.unwrap();
                     let frame = interpreter.push_frame(FrameKind::Method {
                         self_value,
                         method,
@@ -324,7 +324,7 @@ impl Interpreter {
             class: &SOMRef<Class>,
             signature: Interned,
             bytecode_idx: usize,
-        ) -> Option<Rc<Method>> {
+        ) -> Option<Gc<Method>> {
             match frame.borrow().kind() {
                 FrameKind::Block { block } => {
                     let mut inline_cache = block.blk_info.inline_cache.borrow_mut();
@@ -336,7 +336,7 @@ impl Interpreter {
 
                     match maybe_found {
                         Some((receiver, method)) if *receiver == class.as_ptr() => {
-                            Some(Rc::clone(method))
+                            Some(Gc::clone(method))
                         }
                         place @ None => {
                             let found = class.borrow().lookup_method(signature);
@@ -359,7 +359,7 @@ impl Interpreter {
 
                         match maybe_found {
                             Some((receiver, method)) if *receiver == class.as_ptr() => {
-                                Some(Rc::clone(method))
+                                Some(Gc::clone(method))
                             }
                             place @ None => {
                                 let found = class.borrow().lookup_method(signature);
@@ -395,7 +395,7 @@ impl Interpreter {
                         })
                         .collect::<Option<Vec<_>>>()
                         .unwrap();
-                    Value::Array(Rc::new(RefCell::new(arr)))
+                    Value::Array(Gc::new(RefCell::new(arr)))
                 }
                 Literal::Block(val) => Value::Block(val),
             };

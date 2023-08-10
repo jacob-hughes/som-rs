@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::fmt;
-use std::rc::Rc;
+use std::gc::Gc;
 
 use som_core::bytecode::Bytecode;
 
@@ -18,7 +18,7 @@ pub struct BlockInfo {
     pub literals: Vec<Literal>,
     pub body: Vec<Bytecode>,
     pub nb_params: usize,
-    pub inline_cache: RefCell<Vec<Option<(*const Class, Rc<Method>)>>>,
+    pub inline_cache: RefCell<Vec<Option<(*const Class, Gc<Method>)>>>,
 }
 
 /// Represents an executable block.
@@ -26,7 +26,7 @@ pub struct BlockInfo {
 pub struct Block {
     /// Reference to the captured stack frame.
     pub frame: Option<SOMRef<Frame>>,
-    pub blk_info: Rc<BlockInfo>,
+    pub blk_info: Gc<BlockInfo>,
 }
 
 impl Block {

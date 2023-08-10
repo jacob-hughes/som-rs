@@ -1,7 +1,7 @@
 use std::collections::hash_map::DefaultHasher;
 use std::convert::TryFrom;
+use std::gc::Gc;
 use std::hash::Hasher;
-use std::rc::Rc;
 
 use crate::expect_args;
 use crate::invokable::Return;
@@ -139,7 +139,7 @@ fn concatenate(universe: &mut Universe, args: Vec<Value>) -> Return {
         _ => return Return::Exception(format!("'{}': wrong types", SIGNATURE)),
     };
 
-    Return::Local(Value::String(Rc::new(format!("{}{}", s1, s2))))
+    Return::Local(Value::String(Gc::new(format!("{}{}", s1, s2))))
 }
 
 fn as_symbol(universe: &mut Universe, args: Vec<Value>) -> Return {
@@ -200,7 +200,7 @@ fn prim_substring_from_to(universe: &mut Universe, args: Vec<Value>) -> Return {
         (_, _, _) => return Return::Exception(format!("'{}': wrong types", SIGNATURE)),
     };
 
-    let string = Rc::new(value.chars().skip(from).take(to - from).collect());
+    let string = Gc::new(value.chars().skip(from).take(to - from).collect());
 
     Return::Local(Value::String(string))
 }

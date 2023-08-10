@@ -1,9 +1,9 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
+use std::gc::Gc;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 
 use anyhow::{anyhow, Error};
 
@@ -507,12 +507,12 @@ impl Universe {
         &mut self,
         interpreter: &mut Interpreter,
         value: Value,
-        block: Rc<Block>,
+        block: Gc<Block>,
     ) -> Option<()> {
         let method_name = self.intern_symbol("escapedBlock:");
         let method = value.lookup_method(self, method_name)?;
 
-        let holder = method.holder().upgrade().unwrap();
+        let holder = method.holder().unwrap();
         let kind = FrameKind::Method {
             method,
             holder,
@@ -537,7 +537,7 @@ impl Universe {
         let method_name = self.intern_symbol("doesNotUnderstand:arguments:");
         let method = value.lookup_method(self, method_name)?;
 
-        let holder = method.holder().upgrade().unwrap();
+        let holder = method.holder().unwrap();
         let kind = FrameKind::Method {
             method,
             holder,
@@ -547,7 +547,7 @@ impl Universe {
         let frame = interpreter.push_frame(kind);
         frame.borrow_mut().args.push(value);
         frame.borrow_mut().args.push(Value::Symbol(symbol));
-        let args = Value::Array(Rc::new(RefCell::new(args)));
+        let args = Value::Array(Gc::new(RefCell::new(args)));
         frame.borrow_mut().args.push(args);
 
         Some(())
@@ -563,7 +563,7 @@ impl Universe {
         let method_name = self.intern_symbol("unknownGlobal:");
         let method = value.lookup_method(self, method_name)?;
 
-        let holder = method.holder().upgrade().unwrap();
+        let holder = method.holder().unwrap();
         let kind = FrameKind::Method {
             method,
             holder,
@@ -590,7 +590,7 @@ impl Universe {
 
         let frame = interpreter.push_frame(kind);
         frame.borrow_mut().args.push(Value::System);
-        let args = Value::Array(Rc::new(RefCell::new(args)));
+        let args = Value::Array(Gc::new(RefCell::new(args)));
         frame.borrow_mut().args.push(args);
 
         Some(())

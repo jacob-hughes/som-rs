@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::fmt;
-use std::rc::{Rc, Weak};
+use std::gc::Gc;
 
 use indexmap::IndexMap;
 
@@ -9,16 +9,7 @@ use som_core::ast::{ClassDef, MethodBody};
 use crate::method::{Method, MethodKind};
 use crate::primitives;
 use crate::value::Value;
-use crate::{SOMRef, SOMWeakRef};
-
-/// A reference that may be either weak or owned/strong.
-#[derive(Debug, Clone)]
-pub enum MaybeWeak<A> {
-    /// An owned reference.
-    Strong(SOMRef<A>),
-    /// A weak reference.
-    Weak(SOMWeakRef<A>),
-}
+use crate::SOMRef;
 
 /// Represents a loaded class.
 #[derive(Clone)]
@@ -26,14 +17,14 @@ pub struct Class {
     /// The class' name.
     pub name: String,
     /// The class of this class.
-    pub class: MaybeWeak<Class>,
+    pub class: Option<SOMRef<Class>>,
     /// The superclass of this class.
     // TODO: Should probably be `Option<SOMRef<Class>>`.
-    pub super_class: SOMWeakRef<Class>,
+    pub super_class: Option<SOMRef<Class>>,
     /// The class' locals.
     pub locals: IndexMap<String, Value>,
     /// The class' methods/invokables.
-    pub methods: IndexMap<String, Rc<Method>>,
+    pub methods: IndexMap<String, Gc<Method>>,
     /// Is this class a static one ?
     pub is_static: bool,
 }
@@ -67,25 +58,25 @@ impl Class {
             instance_locals
         };
 
-        let static_class = Rc::new(RefCell::new(Self {
+        let static_class = Gc::new(RefCell::new(Self {
             name: format!("{} class", defn.name),
-            class: MaybeWeak::Weak(Weak::new()),
-            super_class: Weak::new(),
+            class: None,
+            super_class: None,
             locals: static_locals,
             methods: IndexMap::new(),
             is_static: true,
         }));
 
-        let instance_class = Rc::new(RefCell::new(Self {
+        let instance_class = Gc::new(RefCell::new(Self {
             name: defn.name.clone(),
-            class: MaybeWeak::Strong(static_class.clone()),
-            super_class: Weak::new(),
+            class: Some(static_class),
+            super_class: None,
             locals: instance_locals,
             methods: IndexMap::new(),
             is_static: false,
         }));
 
-        let mut static_methods: IndexMap<String, Rc<Method>> = defn
+        let mut static_methods: IndexMap<String, Gc<Method>> = defn
             .static_methods
             .iter()
             .map(|method| {
@@ -97,9 +88,9 @@ impl Class {
                 let method = Method {
                     kind,
                     signature: signature.clone(),
-                    holder: Rc::downgrade(&static_class),
+                    holder: Some(static_class),
                 };
-                (signature, Rc::new(method))
+                (signature, Gc::new(method))
             })
             .collect();
 
@@ -115,13 +106,13 @@ impl Class {
                 let method = Method {
                     kind: MethodKind::Primitive(*primitive),
                     signature: signature.to_string(),
-                    holder: Rc::downgrade(&static_class),
+                    holder: Some(static_class),
                 };
-                static_methods.insert(signature.to_string(), Rc::new(method));
+                static_methods.insert(signature.to_string(), Gc::new(method));
             }
         }
 
-        let mut instance_methods: IndexMap<String, Rc<Method>> = defn
+        let mut instance_methods: IndexMap<String, Gc<Method>> = defn
             .instance_methods
             .iter()
             .map(|method| {
@@ -133,9 +124,9 @@ impl Class {
                 let method = Method {
                     kind,
                     signature: signature.clone(),
-                    holder: Rc::downgrade(&instance_class),
+                    holder: Some(instance_class),
                 };
-                (signature, Rc::new(method))
+                (signature, Gc::new(method))
             })
             .collect();
 
@@ -151,9 +142,9 @@ impl Class {
                 let method = Method {
                     kind: MethodKind::Primitive(*primitive),
                     signature: signature.to_string(),
-                    holder: Rc::downgrade(&instance_class),
+                    holder: Some(instance_class),
                 };
-                instance_methods.insert(signature.to_string(), Rc::new(method));
+                instance_methods.insert(signature.to_string(), Gc::new(method));
             }
         }
 
@@ -170,43 +161,36 @@ impl Class {
 
     /// Get the class of this class.
     pub fn class(&self) -> SOMRef<Self> {
-        match self.class {
-            MaybeWeak::Weak(ref weak) => weak.upgrade().unwrap_or_else(|| {
-                panic!("superclass dropped, cannot upgrade ref ({})", self.name())
-            }),
-            MaybeWeak::Strong(ref owned) => owned.clone(),
-        }
+        self.class.unwrap()
     }
 
     /// Set the class of this class (as a weak reference).
     pub fn set_class(&mut self, class: &SOMRef<Self>) {
-        self.class = MaybeWeak::Weak(Rc::downgrade(class));
+        self.class = Some(*class);
     }
 
     /// Set the class of this class (as a strong reference).
     pub fn set_class_owned(&mut self, class: &SOMRef<Self>) {
-        self.class = MaybeWeak::Strong(class.clone());
+        self.class = Some(*class);
     }
 
     /// Get the superclass of this class.
     pub fn super_class(&self) -> Option<SOMRef<Self>> {
-        self.super_class.upgrade()
+        self.super_class
     }
 
     /// Set the superclass of this class (as a weak reference).
     pub fn set_super_class(&mut self, class: &SOMRef<Self>) {
-        self.super_class = Rc::downgrade(class);
+        self.super_class = Some(*class);
     }
 
     /// Search for a given method within this class.
-    pub fn lookup_method(&self, signature: impl AsRef<str>) -> Option<Rc<Method>> {
+    pub fn lookup_method(&self, signature: impl AsRef<str>) -> Option<Gc<Method>> {
         let signature = signature.as_ref();
-        self.methods.get(signature).cloned().or_else(|| {
-            self.super_class
-                .upgrade()?
-                .borrow()
-                .lookup_method(signature)
-        })
+        self.methods
+            .get(signature)
+            .cloned()
+            .or_else(|| self.super_class.unwrap().borrow().lookup_method(signature))
     }
 
     /// Search for a local binding.
