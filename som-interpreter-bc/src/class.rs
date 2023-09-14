@@ -8,6 +8,8 @@ use crate::method::Method;
 use crate::value::Value;
 use crate::SOMRef;
 
+// use std::gc::NonFinalizable;
+use std::gc::FinalizeUnchecked;
 /// Represents a loaded class.
 #[derive(Clone)]
 pub struct Class {
@@ -19,9 +21,9 @@ pub struct Class {
     // TODO: Should probably be `Option<SOMRef<Class>>`.
     pub super_class: Option<SOMRef<Class>>,
     /// The class' locals.
-    pub locals: IndexMap<Interned, Value>,
+    pub locals: FinalizeUnchecked<IndexMap<Interned, Value>>,
     /// The class' methods/invokables.
-    pub methods: IndexMap<Interned, Gc<Method>>,
+    pub methods: FinalizeUnchecked<IndexMap<Interned, Gc<Method>>>,
     /// Is this class a static one ?
     pub is_static: bool,
 }

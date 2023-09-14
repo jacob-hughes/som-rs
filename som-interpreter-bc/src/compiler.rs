@@ -18,6 +18,7 @@ use crate::method::{Method, MethodEnv, MethodKind};
 use crate::primitives;
 use crate::value::Value;
 use crate::SOMRef;
+use std::gc::FinalizeUnchecked;
 
 #[derive(Debug, Clone)]
 pub enum Literal {
@@ -523,8 +524,8 @@ pub fn compile_class(
         name: static_class_ctxt.name.clone(),
         class: None,
         super_class: None,
-        locals: IndexMap::new(),
-        methods: IndexMap::new(),
+        locals: unsafe { FinalizeUnchecked::new(IndexMap::new()) },
+        methods: unsafe { FinalizeUnchecked::new(IndexMap::new()) },
         is_static: true,
     }));
 
@@ -556,12 +557,16 @@ pub fn compile_class(
     }
 
     let mut static_class_mut = static_class.borrow_mut();
-    static_class_mut.locals = static_class_ctxt
-        .fields
-        .into_iter()
-        .map(|name| (name, Value::Nil))
-        .collect();
-    static_class_mut.methods = static_class_ctxt.methods;
+    static_class_mut.locals = unsafe {
+        FinalizeUnchecked::new(
+            static_class_ctxt
+                .fields
+                .into_iter()
+                .map(|name| (name, Value::Nil))
+                .collect(),
+        )
+    };
+    static_class_mut.methods = unsafe { FinalizeUnchecked::new(static_class_ctxt.methods) };
     drop(static_class_mut);
 
     // for method in static_class.borrow().methods.values() {
@@ -602,8 +607,8 @@ pub fn compile_class(
         name: instance_class_ctxt.name.clone(),
         class: Some(static_class),
         super_class: None,
-        locals: IndexMap::new(),
-        methods: IndexMap::new(),
+        locals: unsafe { FinalizeUnchecked::new(IndexMap::new()) },
+        methods: unsafe { FinalizeUnchecked::new(IndexMap::new()) },
         is_static: false,
     }));
 
@@ -641,12 +646,16 @@ pub fn compile_class(
     }
 
     let mut instance_class_mut = instance_class.borrow_mut();
-    instance_class_mut.locals = instance_class_ctxt
-        .fields
-        .into_iter()
-        .map(|name| (name, Value::Nil))
-        .collect();
-    instance_class_mut.methods = instance_class_ctxt.methods;
+    instance_class_mut.locals = unsafe {
+        FinalizeUnchecked::new(
+            instance_class_ctxt
+                .fields
+                .into_iter()
+                .map(|name| (name, Value::Nil))
+                .collect(),
+        )
+    };
+    instance_class_mut.methods = unsafe { FinalizeUnchecked::new(instance_class_ctxt.methods) };
     drop(instance_class_mut);
 
     // for method in instance_class.borrow().methods.values() {
